@@ -1511,7 +1511,7 @@ async function leave(){
 function send(){
   if(!room||!fb)return;
   const pl=(!paused&&!over&&menu.classList.contains("hide"))?1:0;
-  fb.set(fb.ref(db,BASE+code+"/players/"+me.id),{n:me.name,x:+kx.toFixed(2),y:+ky.toFixed(2),a:+ang.toFixed(2),hp:+php.toFixed(1),mh:MAXHP,pl,sh:me.shots,d:dead?1:0,r:round,sa:me.pel||[],g:(intro||starting)?0:1}).catch(e=>st("Gagal kirim: "+(e&&e.message||e)));
+  fb.set(fb.ref(db,BASE+code+"/players/"+me.id),{n:me.name,x:+kx.toFixed(2),y:+ky.toFixed(2),a:+ang.toFixed(2),hp:+(starting?15:php).toFixed(1),mh:starting?15:MAXHP,pl,sh:me.shots,d:(dead&&!starting)?1:0,r:round,sa:me.pel||[],g:(intro||starting)?0:1}).catch(e=>st("Gagal kirim: "+(e&&e.message||e)));
 }
 // ---------- efek ----------
 function pvpDebris(x,y,n,w,f,k){
@@ -1706,6 +1706,7 @@ function listen(){
     if(h!==holder){holder=h;if(h===me.id)becomeKing()}
     const p=v.players&&v.players[oppId];
     if(!p||p.r!==round)return;
+    if(starting)return;                                                         // jangan ambil data lawan saat hitung mundur
     const q=peer||(peer={x:p.x,y:p.y,sh:p.sh||0,fl:0,sa:0});
     q.tx=p.x;q.ty=p.y;q.a=p.a;q.hp=p.hp;q.mh=p.mh||15;q.n=p.n;q.pl=p.pl;q.d=p.d;q.g=p.g;q.t=performance.now();
     if((p.sh||0)>q.sh)peerShot(q,p.sa||[]);
@@ -1866,7 +1867,8 @@ $("mpRoom").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
 $("bPvBack").onclick=()=>pane("pMode");
 $("pvC").onclick=()=>{try{navigator.clipboard.writeText(code);$("pvS").textContent="Kode disalin!"}catch(e){}};
 $("pvBtn").onclick=async()=>{
-  if($("pvpWait").classList.contains("res")){      // Rematch
+  if(state==="playing")return;                      // lagi hitung mundur rematch: abaikan, jangan keluar room
+  if(state==="ended"){                              // Rematch
     if(!room||!fb)return;
     $("pvBtn").disabled=true;$("pvBtn").textContent="Menunggu lawan…";
     fb.set(fb.ref(db,BASE+code+"/rematch/"+me.id),1).catch(()=>{});
